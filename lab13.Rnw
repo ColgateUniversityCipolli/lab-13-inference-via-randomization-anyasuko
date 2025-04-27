@@ -37,10 +37,73 @@ for the the further observations.
   where $f_Z(\cdot)$ and $F_Z(\cdot)$ are the Gaussian PDF and CDF and skew is the
   skewness of the data. What is the potential error in the computation of the 
   $p$-value when testing $H_0: \mu_X=0; H_a: \mu_X<0$ using the zebra finch further data? 
+  <<>>=
+library(tidyverse)
+finches.dat <- read_csv("zebrafinches.csv")
+
+alpha <- 0.05
+t <- t.test(x = finches.dat$further,
+            alternative = "two.sided",
+            mu = 0,
+            conf.level = 0.95)
+
+t.score.further <- -7.778
+
+n <- length(finches.dat$further)
+
+library(e1071)
+further.skew <- skewness(finches.dat$further)
+
+f.of.z <- dnorm(t.score.further,0,1)
+
+F.of.z <- pnorm(t.score.further,0,1)
+
+
+numerator.a <- further.skew / sqrt(n)
+numerator.b <- (2*(t.score.further*t.score.further) + 1)/6
+
+ans <- F.of.z + numerator.a*numerator.b*f.of.z
+print(ans)
+@
 
   \item Compute the error for $t$ statistics from -10 to 10 and plot a line
   that shows the error across $t$. Continue to use the skewness and 
   the sample size for the zebra finch further data.
+  <<>>=
+t.vals <- seq(-10, 10, length.out = 1000)
+
+calculate.error <- function(t.val){
+  skew <- skewness(finches.dat$further)
+  n <- length(finches.dat$further)
+  
+  f.of.z <- dnorm(t.val,0,1)
+  F.of.z <- pnorm(t.val,0,1)
+
+
+  numerator.a <- skew / sqrt(n)
+  numerator.b <- (2*(t.val*t.val) + 1)/6
+
+  ans <- numerator.a*numerator.b*f.of.z
+  return(ans)
+}
+
+error.vals <- numeric(1000)
+for (i in 0:length(t.vals)){
+  t.val <- t.vals[i]
+  error <- calculate.error(t.val)
+  error.vals[i] = error
+}
+
+#plot the results
+plot.data <- tibble(
+  t = t.vals,
+  metric = error.vals
+)
+
+ggplot(plot.data, aes(x = t, y = metric)) +
+  geom_line(color = "blue", linewidth = 1.0) +
+  labs(title = "Error over t-values from -10 to 10", x = "t-value", y = "Error")
+@
 
   \item Suppose we wanted to have a tail probability within 10\% of the desired
   $\alpha=0.05$. Recall we did a left-tailed test using the further data.
@@ -49,10 +112,25 @@ for the the further observations.
   \[0.10 \alpha  \stackrel{set}{=} \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},\]
   which yields
   \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\]
+  <<>>=
+skew <- skewness(finches.dat$further)
+
+alpha <- .05
+  
+t<- qnorm(alpha,0,1)
+
+f.of.z <- dnorm(t,0,1)
+  
+part.a <- skew/ (6*(.10*alpha))
+part.b <- ((2*t*t) + 1) * f.of.z
+
+n <- (part.a*part.b)*(part.a*part.b)
+print(n)
+@
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Question 3
+% Question 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \item Complete the following steps to revisit the analyses from lab 11 using the
@@ -67,9 +145,54 @@ sampling distribution of the $T$ statistic:
   object called \texttt{resamples.null.closer}, for example, and store the 
   resamples shifted to ensure they are consistent with the null hypotheses at the average 
   (i.e., here ensure the shifted resamples are 0 on average, corresponding
-  to $t=0$, for each case). 
+  to $t=0$, for each case).
+  <<>>=
+  
+R <- 1000
+mu0 <- 0
+
+resamples.closer <- tibble(t = numeric(R))
+for(i in 1:R){
+  curr.sample <- sample(x= finches.dat$closer, size = length(finches.dat$closer), replace = T)
+  resamples.closer$t[i] <- (mean(curr.sample) - mu0)/(sd(finches.dat$closer)/sqrt(length(finches.dat$closer)))
+}
+
+resamples.further <- tibble(t = numeric(R))
+for(i in 1:R){
+  curr.sample <- sample(x= finches.dat$further, size = length(finches.dat$further), replace = T)
+  resamples.further$t[i] <- (mean(curr.sample) - mu0)/(sd(finches.dat$further)/sqrt(length(finches.dat$further)))
+}
+
+resamples.difference <- tibble(t = numeric(R))
+for(i in 1:R){
+  curr.sample <- sample(x= finches.dat$diff, size = length(finches.dat$diff), replace = T)
+  resamples.difference$t[i] <- (mean(curr.sample) - mu0)/(sd(finches.dat$diff)/sqrt(length(finches.dat$diff)))
+}
+
+mean.t.closer <- mean(resamples.closer$t)
+print(mean.t.closer)
+mean.t.further <- mean(resamples.further$t)
+print(mean.t.further)
+mean.t.difference <- mean(resamples.difference$t)
+print(mean.t.difference)
+
+  @
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
   How do these compare to the $t$-test $p$-values?
+  <<>>=
+  t.obs.closer <- (mean(finches.dat$closer) - 0) / (sd(finches.dat$closer)/sqrt(length(finches.dat$closer)))
+  t.obs.further <- (mean(finches.dat$further) - 0) / (sd(finches.dat$further)/sqrt(length(finches.dat$further)))
+  t.obs.difference <- (mean(finches.dat$diff) - 0) / (sd(finches.dat$diff)/sqrt(length(finches.dat$diff)))
+
+  closer.shifted <- t.obs.closer - mean.t.closer
+  further.shifted <- t.obs.further- mean.t.further
+  diff.shifted <- t.obs.further - mean.t.difference
+  
+  closer.shifted.p <- #???
+
+  
+  @
+
     \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
   Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
   \item Compute the bootstrap confidence intervals using the resamples. How do these 
@@ -77,7 +200,7 @@ sampling distribution of the $T$ statistic:
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Question 4
+% Question 3
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \item Complete the following steps to revisit the analyses from lab 11 using the
