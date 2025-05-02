@@ -180,6 +180,8 @@ print(mean.t.difference)
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
   How do these compare to the $t$-test $p$-values?
   <<>>=
+  library(boot)
+
   t.obs.closer <- (mean(finches.dat$closer) - 0) / (sd(finches.dat$closer)/sqrt(length(finches.dat$closer)))
   t.obs.further <- (mean(finches.dat$further) - 0) / (sd(finches.dat$further)/sqrt(length(finches.dat$further)))
   t.obs.difference <- (mean(finches.dat$diff) - 0) / (sd(finches.dat$diff)/sqrt(length(finches.dat$diff)))
@@ -188,15 +190,59 @@ print(mean.t.difference)
   further.shifted <- t.obs.further- mean.t.further
   diff.shifted <- t.obs.further - mean.t.difference
   
-  closer.shifted.p <- #???
+closer.shifted.p <- mean(resamples.closer$t >= closer.shifted)
+further.shifted.p <- mean(resamples.further$t >= further.shifted)
+diff.shifted.p <- mean(resamples.difference$t >= diff.shifted)
 
+print(closer.shifted.p)
+print(further.shifted.p)
+print(diff.shifted.p)
   
   @
 
     \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
   Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
+  
+  <<>>=
+  percentile.closer <- quantile(resamples.closer$t, 0.05)
+  percentile.further <- quantile(resamples.further$t, 0.05)
+  percentile.difference <- quantile(resamples.difference$t, 0.05)
+  
+  print(percentile.closer)
+  print(percentile.further)
+  print(percentile.difference)
+
+  critical.value <- qt(0.05, df = length(finches.dat$closer) - 1)
+  print(critical.value)
+
+  @
+  
   \item Compute the bootstrap confidence intervals using the resamples. How do these 
   compare to the $t$-test confidence intervals?
+  
+  <<>>=
+  ci.closer <- quantile(resamples.closer$t, c(0.025, 0.975))
+  ci.further <- quantile(resamples.further$t, c(0.025, 0.975))
+  ci.difference <- quantile(resamples.difference$t, c(0.025, 0.975))
+  
+  print(ci.closer)
+  print(ci.further)
+  print(ci.difference)
+  
+  
+  alpha <- 0.05
+  t.critical <- qt(1 - alpha/2, df = length(finches.dat$closer) - 1)
+  
+  ci.t.closer <- mean(finches.dat$closer) + c(-1, 1) * t.critical * (sd(finches.dat$closer) / sqrt(length(finches.dat$closer)))
+  ci.t.further <- mean(finches.dat$further) + c(-1, 1) * t.critical * (sd(finches.dat$further) / sqrt(length(finches.dat$further)))
+  ci.t.difference <- mean(finches.dat$diff) + c(-1, 1) * t.critical * (sd(finches.dat$diff) / sqrt(length(finches.dat$diff)))
+
+  print(ci.t.closer)
+print(ci.t.further)
+print(ci.t.difference)
+  
+  @
+  
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -208,11 +254,120 @@ randomization procedure.
 \begin{enumerate}
 \item Now, consider the zebra finch data. We do not know the generating distributions
 for the closer, further, and difference data, so perform the randomization procedure
+<<>>=
+R <- 1000
+
+randomization.closer <- numeric(R)
+randomization.further <- numeric(R)
+
+randomize_test_statistic <- function(data1, data2) {
+  combined_data <- c(data1, data2)
+  
+  shuffled_data <- sample(combined_data)
+  
+  group1 <- shuffled_data[1:length(data1)]
+  group2 <- shuffled_data[(length(data1)+1):length(shuffled_data)]
+  
+  return(abs(mean(group1) - mean(group2)))
+}
+
+for(i in 1:R) {
+  randomization.closer[i] <- randomize_test_statistic(finches.dat$closer, finches.dat$further)
+  randomization.further[i] <- randomize_test_statistic(finches.dat$further, finches.dat$closer)
+}
+
+observed.closer <- abs(mean(finches.dat$closer) - mean(finches.dat$further))
+observed.further <- abs(mean(finches.dat$further) - mean(finches.dat$closer))
+
+p.value.closer <- mean(randomization.closer >= observed.closer)
+p.value.further <- mean(randomization.further >= observed.further)
+
+print(p.value.closer)
+print(p.value.further)
+
+@
   \item Compute the randomization test $p$-value for each test.
+  <<>>=
+set.seed(123)
+R <- 10000
+obs.stat <- mean(finches.dat$closer) - mean(finches.dat$further)
+combined <- c(finches.dat$closer, finches.dat$further)
+n1 <- length(finches.dat$closer)
+rand.diff <- numeric(R)
+
+for (i in 1:R) {
+  shuffled <- sample(combined)
+  group1 <- shuffled[1:n1]
+  group2 <- shuffled[(n1 + 1):length(shuffled)]
+  rand.diff[i] <- mean(group1) - mean(group2)
+}
+
+p.val.diff <- mean(abs(rand.diff) >= abs(obs.stat))
+print(p.val.diff)
+
+obs.closer <- mean(finches.dat$closer)
+rand.closer <- numeric(R)
+
+for (i in 1:R) {
+  signs <- sample(c(-1, 1), length(finches.dat$closer), replace = TRUE)
+  rand.closer[i] <- mean(signs * finches.dat$closer)
+}
+
+p.val.closer <- mean(abs(rand.closer) >= abs(obs.closer))
+print(p.val.closer)
+
+
+obs.further <- mean(finches.dat$further)
+rand.further <- numeric(R)
+
+for (i in 1:R) {
+  signs <- sample(c(-1, 1), length(finches.dat$further), replace = TRUE)
+  rand.further[i] <- mean(signs * finches.dat$further)
+}
+
+p.val.further <- mean(abs(rand.further) >= abs(obs.further))
+print(p.val.further)
+
+@
   \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
   \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
   and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
   the first value for which the two-sided $p$-value is greater than or equal to 0.05.
+  <<>>=
+set.seed(123)
+R <- 1000
+x <- finches.dat$closer
+n <- length(x)
+
+compute_pval <- function(mu0) {
+  obs <- mean(x) - mu0
+  null_dist <- numeric(R)
+  
+  for (i in 1:R) {
+    signs <- sample(c(-1, 1), n, replace = TRUE)
+    shifted_sample <- (x - mu0) * signs + mu0
+    null_dist[i] <- mean(shifted_sample) - mu0
+  }
+  
+  mean(abs(null_dist) >= abs(obs))
+}
+
+q1 <- mean(x) - sd(x) / sqrt(n)
+q3 <- mean(x) + sd(x) / sqrt(n)
+
+mu.lower <- q1
+while (compute_pval(mu.lower) < 0.05) {
+  mu.lower <- mu.lower - 0.0001
+}
+
+mu.upper <- q3
+while (compute_pval(mu.upper) < 0.05) {
+  mu.upper <- mu.upper + 0.0001
+}
+
+print(mu.lower)
+print(mu.upper)
+@
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

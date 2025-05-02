@@ -244,21 +244,21 @@ sampling distribution of the $T$ statistic:
 \hlkwd{print}\hldef{(mean.t.closer)}
 \end{alltt}
 \begin{verbatim}
-## [1] 8.403617
+## [1] 8.309762
 \end{verbatim}
 \begin{alltt}
 \hldef{mean.t.further} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.further}\hlopt{$}\hldef{t)}
 \hlkwd{print}\hldef{(mean.t.further)}
 \end{alltt}
 \begin{verbatim}
-## [1] -7.775494
+## [1] -7.802505
 \end{verbatim}
 \begin{alltt}
 \hldef{mean.t.difference} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.difference}\hlopt{$}\hldef{t)}
 \hlkwd{print}\hldef{(mean.t.difference)}
 \end{alltt}
 \begin{verbatim}
-## [1] 8.54412
+## [1] 8.488958
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -267,31 +267,33 @@ sampling distribution of the $T$ statistic:
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
+\hlkwd{library}\hldef{(boot)}
+
 \hldef{t.obs.closer} \hlkwb{<-} \hldef{(}\hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{-} \hlnum{0}\hldef{)} \hlopt{/} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{closer)}\hlopt{/}\hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer)))}
 \hldef{t.obs.further} \hlkwb{<-} \hldef{(}\hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further)} \hlopt{-} \hlnum{0}\hldef{)} \hlopt{/} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{further)}\hlopt{/}\hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{further)))}
 \hldef{t.obs.difference} \hlkwb{<-} \hldef{(}\hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{diff)} \hlopt{-} \hlnum{0}\hldef{)} \hlopt{/} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{diff)}\hlopt{/}\hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{diff)))}
 
-\hldef{resamples.null.closer} \hlkwb{<-} \hldef{resamples.closer}\hlopt{$}\hldef{t} \hlopt{-} \hlkwd{mean}\hldef{(resamples.closer}\hlopt{$}\hldef{t)}
-\hldef{resamples.null.further} \hlkwb{<-} \hldef{resamples.further}\hlopt{$}\hldef{t} \hlopt{-} \hlkwd{mean}\hldef{(resamples.further}\hlopt{$}\hldef{t)}
-\hldef{resamples.null.difference} \hlkwb{<-} \hldef{resamples.difference}\hlopt{$}\hldef{t} \hlopt{-} \hlkwd{mean}\hldef{(resamples.difference}\hlopt{$}\hldef{t)}
+\hldef{closer.shifted} \hlkwb{<-} \hldef{t.obs.closer} \hlopt{-} \hldef{mean.t.closer}
+\hldef{further.shifted} \hlkwb{<-} \hldef{t.obs.further}\hlopt{-} \hldef{mean.t.further}
+\hldef{diff.shifted} \hlkwb{<-} \hldef{t.obs.further} \hlopt{-} \hldef{mean.t.difference}
 
-\hldef{pval.closer} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.null.closer} \hlopt{<=} \hldef{t.obs.closer)}
-\hldef{pval.further} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.null.further} \hlopt{<=} \hldef{t.obs.further)}
-\hldef{pval.difference} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.null.difference} \hlopt{<=} \hldef{t.obs.difference)}
+\hldef{closer.shifted.p} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.closer}\hlopt{$}\hldef{t} \hlopt{>=} \hldef{closer.shifted)}
+\hldef{further.shifted.p} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.further}\hlopt{$}\hldef{t} \hlopt{>=} \hldef{further.shifted)}
+\hldef{diff.shifted.p} \hlkwb{<-} \hlkwd{mean}\hldef{(resamples.difference}\hlopt{$}\hldef{t} \hlopt{>=} \hldef{diff.shifted)}
 
-\hlkwd{print}\hldef{(pval.closer)}
+\hlkwd{print}\hldef{(closer.shifted.p)}
 \end{alltt}
 \begin{verbatim}
 ## [1] 1
 \end{verbatim}
 \begin{alltt}
-\hlkwd{print}\hldef{(pval.further)}
+\hlkwd{print}\hldef{(further.shifted.p)}
 \end{alltt}
 \begin{verbatim}
 ## [1] 0
 \end{verbatim}
 \begin{alltt}
-\hlkwd{print}\hldef{(pval.difference)}
+\hlkwd{print}\hldef{(diff.shifted.p)}
 \end{alltt}
 \begin{verbatim}
 ## [1] 1
@@ -301,8 +303,102 @@ sampling distribution of the $T$ statistic:
 
     \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
   Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
+  
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{percentile.closer} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.closer}\hlopt{$}\hldef{t,} \hlnum{0.05}\hldef{)}
+\hldef{percentile.further} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.further}\hlopt{$}\hldef{t,} \hlnum{0.05}\hldef{)}
+\hldef{percentile.difference} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.difference}\hlopt{$}\hldef{t,} \hlnum{0.05}\hldef{)}
+
+\hlkwd{print}\hldef{(percentile.closer)}
+\end{alltt}
+\begin{verbatim}
+##       5% 
+## 6.689574
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(percentile.further)}
+\end{alltt}
+\begin{verbatim}
+##        5% 
+## -9.522495
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(percentile.difference)}
+\end{alltt}
+\begin{verbatim}
+##       5% 
+## 6.962115
+\end{verbatim}
+\begin{alltt}
+\hldef{critical.value} \hlkwb{<-} \hlkwd{qt}\hldef{(}\hlnum{0.05}\hldef{,} \hlkwc{df} \hldef{=} \hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{-} \hlnum{1}\hldef{)}
+\hlkwd{print}\hldef{(critical.value)}
+\end{alltt}
+\begin{verbatim}
+## [1] -1.710882
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+  
   \item Compute the bootstrap confidence intervals using the resamples. How do these 
   compare to the $t$-test confidence intervals?
+  
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{ci.closer} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.closer}\hlopt{$}\hldef{t,} \hlkwd{c}\hldef{(}\hlnum{0.025}\hldef{,} \hlnum{0.975}\hldef{))}
+\hldef{ci.further} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.further}\hlopt{$}\hldef{t,} \hlkwd{c}\hldef{(}\hlnum{0.025}\hldef{,} \hlnum{0.975}\hldef{))}
+\hldef{ci.difference} \hlkwb{<-} \hlkwd{quantile}\hldef{(resamples.difference}\hlopt{$}\hldef{t,} \hlkwd{c}\hldef{(}\hlnum{0.025}\hldef{,} \hlnum{0.975}\hldef{))}
+
+\hlkwd{print}\hldef{(ci.closer)}
+\end{alltt}
+\begin{verbatim}
+##      2.5%     97.5% 
+##  6.384678 10.119036
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(ci.further)}
+\end{alltt}
+\begin{verbatim}
+##      2.5%     97.5% 
+## -9.797075 -6.000155
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(ci.difference)}
+\end{alltt}
+\begin{verbatim}
+##     2.5%    97.5% 
+##  6.65140 10.51601
+\end{verbatim}
+\begin{alltt}
+\hldef{alpha} \hlkwb{<-} \hlnum{0.05}
+\hldef{t.critical} \hlkwb{<-} \hlkwd{qt}\hldef{(}\hlnum{1} \hlopt{-} \hldef{alpha}\hlopt{/}\hlnum{2}\hldef{,} \hlkwc{df} \hldef{=} \hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{-} \hlnum{1}\hldef{)}
+
+\hldef{ci.t.closer} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{+} \hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{)} \hlopt{*} \hldef{t.critical} \hlopt{*} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{/} \hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer)))}
+\hldef{ci.t.further} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further)} \hlopt{+} \hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{)} \hlopt{*} \hldef{t.critical} \hlopt{*} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{further)} \hlopt{/} \hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{further)))}
+\hldef{ci.t.difference} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{diff)} \hlopt{+} \hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{)} \hlopt{*} \hldef{t.critical} \hlopt{*} \hldef{(}\hlkwd{sd}\hldef{(finches.dat}\hlopt{$}\hldef{diff)} \hlopt{/} \hlkwd{sqrt}\hldef{(}\hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{diff)))}
+
+\hlkwd{print}\hldef{(ci.t.closer)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.1173875 0.1950586
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(ci.t.further)}
+\end{alltt}
+\begin{verbatim}
+## [1] -0.2565176 -0.1489313
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(ci.t.difference)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.2719028 0.4459921
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+  
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -314,11 +410,156 @@ randomization procedure.
 \begin{enumerate}
 \item Now, consider the zebra finch data. We do not know the generating distributions
 for the closer, further, and difference data, so perform the randomization procedure
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{R} \hlkwb{<-} \hlnum{1000}
+
+\hldef{randomization.closer} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+\hldef{randomization.further} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+
+\hldef{randomize_test_statistic} \hlkwb{<-} \hlkwa{function}\hldef{(}\hlkwc{data1}\hldef{,} \hlkwc{data2}\hldef{) \{}
+  \hldef{combined_data} \hlkwb{<-} \hlkwd{c}\hldef{(data1, data2)}
+
+  \hldef{shuffled_data} \hlkwb{<-} \hlkwd{sample}\hldef{(combined_data)}
+
+  \hldef{group1} \hlkwb{<-} \hldef{shuffled_data[}\hlnum{1}\hlopt{:}\hlkwd{length}\hldef{(data1)]}
+  \hldef{group2} \hlkwb{<-} \hldef{shuffled_data[(}\hlkwd{length}\hldef{(data1)}\hlopt{+}\hlnum{1}\hldef{)}\hlopt{:}\hlkwd{length}\hldef{(shuffled_data)]}
+
+  \hlkwd{return}\hldef{(}\hlkwd{abs}\hldef{(}\hlkwd{mean}\hldef{(group1)} \hlopt{-} \hlkwd{mean}\hldef{(group2)))}
+\hldef{\}}
+
+\hlkwa{for}\hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+  \hldef{randomization.closer[i]} \hlkwb{<-} \hlkwd{randomize_test_statistic}\hldef{(finches.dat}\hlopt{$}\hldef{closer, finches.dat}\hlopt{$}\hldef{further)}
+  \hldef{randomization.further[i]} \hlkwb{<-} \hlkwd{randomize_test_statistic}\hldef{(finches.dat}\hlopt{$}\hldef{further, finches.dat}\hlopt{$}\hldef{closer)}
+\hldef{\}}
+
+\hldef{observed.closer} \hlkwb{<-} \hlkwd{abs}\hldef{(}\hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further))}
+\hldef{observed.further} \hlkwb{<-} \hlkwd{abs}\hldef{(}\hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further)} \hlopt{-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer))}
+
+\hldef{p.value.closer} \hlkwb{<-} \hlkwd{mean}\hldef{(randomization.closer} \hlopt{>=} \hldef{observed.closer)}
+\hldef{p.value.further} \hlkwb{<-} \hlkwd{mean}\hldef{(randomization.further} \hlopt{>=} \hldef{observed.further)}
+
+\hlkwd{print}\hldef{(p.value.closer)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(p.value.further)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
   \item Compute the randomization test $p$-value for each test.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{set.seed}\hldef{(}\hlnum{123}\hldef{)}
+\hldef{R} \hlkwb{<-} \hlnum{10000}
+\hldef{obs.stat} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer)} \hlopt{-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further)}
+\hldef{combined} \hlkwb{<-} \hlkwd{c}\hldef{(finches.dat}\hlopt{$}\hldef{closer, finches.dat}\hlopt{$}\hldef{further)}
+\hldef{n1} \hlkwb{<-} \hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer)}
+\hldef{rand.diff} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{shuffled} \hlkwb{<-} \hlkwd{sample}\hldef{(combined)}
+\hldef{group1} \hlkwb{<-} \hldef{shuffled[}\hlnum{1}\hlopt{:}\hldef{n1]}
+\hldef{group2} \hlkwb{<-} \hldef{shuffled[(n1} \hlopt{+} \hlnum{1}\hldef{)}\hlopt{:}\hlkwd{length}\hldef{(shuffled)]}
+\hldef{rand.diff[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(group1)} \hlopt{-} \hlkwd{mean}\hldef{(group2)}
+\hldef{\}}
+
+\hldef{p.val.diff} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.diff)} \hlopt{>=} \hlkwd{abs}\hldef{(obs.stat))}
+\hlkwd{print}\hldef{(p.val.diff)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\begin{alltt}
+\hldef{obs.closer} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{closer)}
+\hldef{rand.closer} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{),} \hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{closer),} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+\hldef{rand.closer[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{finches.dat}\hlopt{$}\hldef{closer)}
+\hldef{\}}
+
+\hldef{p.val.closer} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.closer)} \hlopt{>=} \hlkwd{abs}\hldef{(obs.closer))}
+\hlkwd{print}\hldef{(p.val.closer)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\begin{alltt}
+\hldef{obs.further} \hlkwb{<-} \hlkwd{mean}\hldef{(finches.dat}\hlopt{$}\hldef{further)}
+\hldef{rand.further} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{),} \hlkwd{length}\hldef{(finches.dat}\hlopt{$}\hldef{further),} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+\hldef{rand.further[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{finches.dat}\hlopt{$}\hldef{further)}
+\hldef{\}}
+
+\hldef{p.val.further} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.further)} \hlopt{>=} \hlkwd{abs}\hldef{(obs.further))}
+\hlkwd{print}\hldef{(p.val.further)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
   \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
   \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
   and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
   the first value for which the two-sided $p$-value is greater than or equal to 0.05.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{set.seed}\hldef{(}\hlnum{123}\hldef{)}
+\hldef{R} \hlkwb{<-} \hlnum{1000}
+\hldef{x} \hlkwb{<-} \hldef{finches.dat}\hlopt{$}\hldef{closer}
+\hldef{n} \hlkwb{<-} \hlkwd{length}\hldef{(x)}
+
+\hldef{compute_pval} \hlkwb{<-} \hlkwa{function}\hldef{(}\hlkwc{mu0}\hldef{) \{}
+\hldef{obs} \hlkwb{<-} \hlkwd{mean}\hldef{(x)} \hlopt{-} \hldef{mu0}
+\hldef{null_dist} \hlkwb{<-} \hlkwd{numeric}\hldef{(R)}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+  \hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,} \hlnum{1}\hldef{), n,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+  \hldef{shifted_sample} \hlkwb{<-} \hldef{(x} \hlopt{-} \hldef{mu0)} \hlopt{*} \hldef{signs} \hlopt{+} \hldef{mu0}
+  \hldef{null_dist[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(shifted_sample)} \hlopt{-} \hldef{mu0}
+\hldef{\}}
+
+\hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(null_dist)} \hlopt{>=} \hlkwd{abs}\hldef{(obs))}
+\hldef{\}}
+
+\hldef{q1} \hlkwb{<-} \hlkwd{mean}\hldef{(x)} \hlopt{-} \hlkwd{sd}\hldef{(x)} \hlopt{/} \hlkwd{sqrt}\hldef{(n)}
+\hldef{q3} \hlkwb{<-} \hlkwd{mean}\hldef{(x)} \hlopt{+} \hlkwd{sd}\hldef{(x)} \hlopt{/} \hlkwd{sqrt}\hldef{(n)}
+
+\hldef{mu.lower} \hlkwb{<-} \hldef{q1}
+\hlkwa{while} \hldef{(}\hlkwd{compute_pval}\hldef{(mu.lower)} \hlopt{<} \hlnum{0.05}\hldef{) \{}
+\hldef{mu.lower} \hlkwb{<-} \hldef{mu.lower} \hlopt{-} \hlnum{0.0001}
+\hldef{\}}
+
+\hldef{mu.upper} \hlkwb{<-} \hldef{q3}
+\hlkwa{while} \hldef{(}\hlkwd{compute_pval}\hldef{(mu.upper)} \hlopt{<} \hlnum{0.05}\hldef{) \{}
+\hldef{mu.upper} \hlkwb{<-} \hldef{mu.upper} \hlopt{+} \hlnum{0.0001}
+\hldef{\}}
+
+\hlkwd{print}\hldef{(mu.lower)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.1374065
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hldef{(mu.upper)}
+\end{alltt}
+\begin{verbatim}
+## [1] 0.1750397
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
