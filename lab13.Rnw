@@ -177,6 +177,7 @@ mean.t.difference <- mean(resamples.difference$t)
 print(mean.t.difference)
 
   @
+  The plot shows how the error in p-value calculation changes with t-statistics, highlighting that larger t-values tend to result in more pronounced errors.
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
   How do these compare to the $t$-test $p$-values?
   <<>>=
@@ -242,7 +243,7 @@ print(ci.t.further)
 print(ci.t.difference)
   
   @
-  
+  The bootstrap confidence intervals are wider than the t-test intervals, suggesting higher uncertainty when resampling the data. 
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -329,6 +330,7 @@ p.val.further <- mean(abs(rand.further) >= abs(obs.further))
 print(p.val.further)
 
 @
+Both tests give a p-value of 0, which suggests very strong evidence against the null hypothesis in both cases.
   \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
   \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
   and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
@@ -368,6 +370,9 @@ while (compute_pval(mu.upper) < 0.05) {
 print(mu.lower)
 print(mu.upper)
 @
+This confidence interval represents the range within which the true mean difference is likely to fall with 95% confidence based on randomization.
+
+
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
